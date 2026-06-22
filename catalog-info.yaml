@@ -1,0 +1,8 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: rhdh-templates
+  description: Software templates for the OCP Dev Days workshop
+spec:
+  targets:
+    - ./templates/parasol-dev-environment/template.yaml

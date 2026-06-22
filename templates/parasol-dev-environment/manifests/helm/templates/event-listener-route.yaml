@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: parasol-insurance-listener
+  namespace: ${{ values.namespace }}
+spec:
+  host: el-parasol-${{ values.owner }}.${{ values.cluster_subdomain }}
+  port:
+    targetPort: http-listener
+  to:
+    kind: Service
+    name: el-parasol-insurance-listener
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
