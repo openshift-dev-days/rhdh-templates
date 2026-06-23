@@ -5,10 +5,9 @@ metadata:
   namespace: ${{ values.namespace }}
   labels:
     app: parasol-insurance
-    app.kubernetes.io/name: parasol-insurance
-    app.kubernetes.io/part-of: parasol-insurance
+    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+    app.kubernetes.io/part-of: parasol-insurance-dev
     app.openshift.io/runtime: quarkus
-    backstage.io/kubernetes-id: parasol-insurance
   annotations:
     app.openshift.io/vcs-uri: "${{ values.source_repo }}"
     app.openshift.io/vcs-ref: "${{ values.branch }}"
@@ -21,7 +20,8 @@ spec:
     metadata:
       labels:
         app: parasol-insurance
-        backstage.io/kubernetes-id: parasol-insurance
+        app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+        app.kubernetes.io/part-of: parasol-insurance-dev
     spec:
       containers:
         - name: parasol-insurance

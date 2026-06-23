@@ -5,6 +5,8 @@ metadata:
   namespace: ${{ values.namespace }}
   labels:
     app: parasol-db
+    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+    app.kubernetes.io/part-of: parasol-insurance-dev
 spec:
   ports:
     - name: postgresql

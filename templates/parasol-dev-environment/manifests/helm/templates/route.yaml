@@ -5,8 +5,8 @@ metadata:
   namespace: ${{ values.namespace }}
   labels:
     app: parasol-insurance
-    app.kubernetes.io/part-of: parasol-insurance
-    backstage.io/kubernetes-id: parasol-insurance
+    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+    app.kubernetes.io/part-of: parasol-insurance-dev
 spec:
   to:
     kind: Service

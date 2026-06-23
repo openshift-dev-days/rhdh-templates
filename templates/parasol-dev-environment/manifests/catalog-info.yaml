@@ -7,11 +7,11 @@ metadata:
   annotations:
     argocd/app-name: parasol-insurance-dev-${{ values.owner }}
     backstage.io/source-location: url:https://${{ values.gitlab_host }}/${{ values.owner }}/parasol-insurance/-/tree/${{ values.branch }}
-    backstage.io/kubernetes-namespace: ${{ values.namespace }}
-    backstage.io/kubernetes-id: parasol-insurance
-    janus-idp.io/tekton: ${{ values.namespace }}
+    backstage.io/kubernetes-id: parasol-insurance-${{ values.owner }}
+    backstage.io/kubernetes-label-selector: "app.kubernetes.io/name=parasol-insurance-${{ values.owner }}"
+    janus-idp.io/tekton: parasol-insurance
     gitlab.com/project-slug: ${{ values.owner }}/parasol-insurance
-    sonarqube.org/project-key: parasol-insurance
+    sonarqube.org/project-key: parasol-insurance-${{ values.owner }}
   links:
     - url: https://devspaces.${{ values.cluster_subdomain }}/#https://${{ values.gitlab_host }}/${{ values.owner }}/parasol-insurance/-/tree/${{ values.branch }}
       title: Open in Dev Spaces

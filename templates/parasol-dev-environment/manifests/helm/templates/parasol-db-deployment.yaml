@@ -5,6 +5,8 @@ metadata:
   namespace: ${{ values.namespace }}
   labels:
     app: parasol-db
+    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+    app.kubernetes.io/part-of: parasol-insurance-dev
     app.openshift.io/runtime: postgresql
 spec:
   replicas: 1
@@ -17,6 +19,8 @@ spec:
     metadata:
       labels:
         app: parasol-db
+        app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+        app.kubernetes.io/part-of: parasol-insurance-dev
     spec:
       securityContext:
         runAsNonRoot: true
