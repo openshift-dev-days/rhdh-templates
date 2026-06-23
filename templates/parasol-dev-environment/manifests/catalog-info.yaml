@@ -5,7 +5,7 @@ metadata:
   title: Parasol Insurance Dev (${{ values.branch }})
   description: Development sandbox for Parasol Insurance (${{ values.branch }} branch)
   annotations:
-    argocd/app-name: parasol-insurance-dev-${{ values.owner }}
+    argocd/app-name: parasol-insurance-dev-${{ values.owner }}-${{ values.branch }}
     backstage.io/source-location: url:https://${{ values.gitlab_host }}/${{ values.owner }}/parasol-insurance/-/tree/${{ values.branch }}
     backstage.io/kubernetes-id: parasol-insurance-${{ values.owner }}-${{ values.branch }}
     backstage.io/kubernetes-label-selector: "app.kubernetes.io/name=parasol-insurance-${{ values.owner }}-${{ values.branch }}"

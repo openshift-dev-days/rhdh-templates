@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: parasol-insurance-dev-${{ values.owner }}
+  name: parasol-insurance-dev-${{ values.owner }}-${{ values.branch }}
   namespace: ${{ values.gitops_namespace }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
