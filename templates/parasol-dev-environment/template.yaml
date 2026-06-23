@@ -65,7 +65,6 @@ spec:
       action: argocd:create-resources
       input:
         appName: parasol-insurance-dev-${{ user.entity.metadata.name }}
-        projectName: default
         argoInstance: main
         namespace: openshift-gitops
         repoUrl: ${{ steps.publish.output.remoteUrl }}.git
