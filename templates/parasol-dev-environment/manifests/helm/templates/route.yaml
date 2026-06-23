@@ -5,7 +5,7 @@ metadata:
   namespace: ${{ values.namespace }}
   labels:
     app: parasol-insurance
-    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}-${{ values.branch }}
     app.kubernetes.io/part-of: parasol-insurance-dev
 spec:
   to:

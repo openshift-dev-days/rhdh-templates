@@ -13,7 +13,7 @@ spec:
         generateName: parasol-insurance-push-
         namespace: ${{ values.namespace }}
         labels:
-          app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+          app.kubernetes.io/name: parasol-insurance-${{ values.owner }}-${{ values.branch }}
       spec:
         pipelineRef:
           name: parasol-insurance-push

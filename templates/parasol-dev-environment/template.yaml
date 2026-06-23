@@ -39,7 +39,7 @@ spec:
       input:
         url: ./manifests/
         values:
-          namespace: ${{ user.entity.metadata.name }}-dev
+          namespace: ${{ user.entity.metadata.name }}-${{ parameters.branch }}
           branch: ${{ parameters.branch }}
           source_repo: https://{{ gitlab_host }}/${{ user.entity.metadata.name }}/parasol-insurance.git
           owner: ${{ user.entity.metadata.name }}

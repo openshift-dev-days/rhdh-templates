@@ -5,7 +5,7 @@ metadata:
   namespace: ${{ values.namespace }}
   labels:
     app: parasol-db
-    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+    app.kubernetes.io/name: parasol-insurance-${{ values.owner }}-${{ values.branch }}
     app.kubernetes.io/part-of: parasol-insurance-dev
     app.openshift.io/runtime: postgresql
 spec:
@@ -19,7 +19,7 @@ spec:
     metadata:
       labels:
         app: parasol-db
-        app.kubernetes.io/name: parasol-insurance-${{ values.owner }}
+        app.kubernetes.io/name: parasol-insurance-${{ values.owner }}-${{ values.branch }}
         app.kubernetes.io/part-of: parasol-insurance-dev
     spec:
       securityContext:
