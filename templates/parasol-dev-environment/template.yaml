@@ -80,7 +80,7 @@ spec:
         repoUrl: {{ gitlab_host }}?owner=parasol&repo=parasol-insurance-${{ user.entity.metadata.name }}-${{ parameters.branch }}-bootstrap
         sourcePath: bootstrap
         defaultBranch: main
-        repoVisibility: internal
+        repoVisibility: public
 
     - id: create-argocd-resources
       name: Create ArgoCD Resources
