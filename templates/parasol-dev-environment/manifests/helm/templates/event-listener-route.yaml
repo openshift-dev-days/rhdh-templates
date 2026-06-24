@@ -4,7 +4,7 @@ metadata:
   name: parasol-insurance-listener
   namespace: ${{ values.namespace }}
 spec:
-  host: el-parasol-${{ values.owner }}.${{ values.cluster_subdomain }}
+  host: el-${{ values.owner }}-${{ values.branch }}.${{ values.cluster_subdomain }}
   port:
     targetPort: http-listener
   to:
