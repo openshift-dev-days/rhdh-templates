@@ -52,24 +52,45 @@ spec:
           gitops_namespace: openshift-gitops
           dev_email: ${{ user.entity.spec.profile.email }}
 
+    - id: fetch-bootstrap
+      name: Fetch Bootstrap
+      action: fetch:template
+      input:
+        url: ./bootstrap/
+        targetPath: bootstrap
+        values:
+          namespace: ${{ user.entity.metadata.name }}-${{ parameters.branch }}
+          branch: ${{ parameters.branch }}
+          owner: ${{ user.entity.metadata.name }}
+          gitlab_host: {{ gitlab_host }}
+          gitops_namespace: openshift-gitops
+
     - id: publish
-      name: Publish to GitLab
+      name: Publish GitOps Repo
       action: publish:gitlab
       input:
         repoUrl: {{ gitlab_host }}?owner=${{ user.entity.metadata.name }}&repo=parasol-insurance-${{ parameters.branch }}-gitops
         defaultBranch: main
         repoVisibility: public
 
+    - id: publish-bootstrap
+      name: Publish Bootstrap Repo
+      action: publish:gitlab
+      input:
+        repoUrl: {{ gitlab_host }}?owner=parasol&repo=parasol-insurance-${{ user.entity.metadata.name }}-${{ parameters.branch }}-bootstrap
+        sourcePath: bootstrap
+        defaultBranch: main
+        repoVisibility: internal
+
     - id: create-argocd-resources
       name: Create ArgoCD Resources
       action: argocd:create-resources
       input:
-        appName: parasol-insurance-dev-${{ user.entity.metadata.name }}-${{ parameters.branch }}
-        projectName: appproject-${{ user.entity.metadata.name }}
+        appName: parasol-insurance-dev-${{ user.entity.metadata.name }}-${{ parameters.branch }}-bootstrap
         argoInstance: main
         namespace: openshift-gitops
-        repoUrl: ${{ steps.publish.output.remoteUrl }}.git
-        path: helm
+        repoUrl: ${{ steps['publish-bootstrap'].output.remoteUrl }}.git
+        path: .
 
     - id: register
       name: Register Component
