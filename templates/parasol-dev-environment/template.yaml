@@ -64,11 +64,12 @@ spec:
       name: Create ArgoCD Resources
       action: argocd:create-resources
       input:
-        appName: parasol-insurance-dev-${{ user.entity.metadata.name }}-${{ parameters.branch }}-bootstrap
+        appName: parasol-insurance-dev-${{ user.entity.metadata.name }}-${{ parameters.branch }}
+        projectName: appproject-${{ user.entity.metadata.name }}
         argoInstance: main
         namespace: openshift-gitops
         repoUrl: ${{ steps.publish.output.remoteUrl }}.git
-        path: argocd
+        path: helm
 
     - id: register
       name: Register Component
