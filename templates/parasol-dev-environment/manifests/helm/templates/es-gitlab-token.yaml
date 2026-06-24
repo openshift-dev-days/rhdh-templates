@@ -14,5 +14,5 @@ spec:
   data:
     - secretKey: token
       remoteRef:
-        key: secrets/parasol-insurance/webhook-secret
+        key: secrets/common/webhook-secret
         property: value
