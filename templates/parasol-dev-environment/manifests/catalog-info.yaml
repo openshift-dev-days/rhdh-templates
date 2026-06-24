@@ -1,7 +1,7 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: parasol-insurance-dev-${{ values.owner }}
+  name: parasol-insurance-dev-${{ values.owner }}-${{ values.branch }}
   title: Parasol Insurance Dev (${{ values.branch }})
   description: Development sandbox for Parasol Insurance (${{ values.branch }} branch)
   annotations:
