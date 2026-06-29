@@ -57,7 +57,7 @@ spec:
         - name: SONAR_DASHBOARD_URL
           value: "https://sonarqube-sonarqube.${{ values.cluster_subdomain }}"
         - name: SONAR_PROJECT_KEY
-          value: parasol-insurance
+          value: parasol-insurance-${{ values.namespace }}
       workspaces:
         - name: source
           workspace: source
