@@ -47,7 +47,7 @@ spec:
         REPORT_URL="${DASHBOARD_URL}/dashboard?id=${SONAR_PROJECT_KEY}"
         echo -n "${REPORT_URL}" > $(results.SONAR_REPORT_URL.path)
 
-        mvn verify sonar:sonar \
+        mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
           -Dsonar.host.url="${SONAR_HOST_URL}" \
           -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
           -Dsonar.login="${SONAR_LOGIN}" \
