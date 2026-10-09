@@ -20,4 +20,4 @@ spec:
   type: service
   lifecycle: development
   owner: user:default/${{ values.owner }}
-  system: parasol-insurance
+  system: parasol-insurance-${{ values.owner }}
