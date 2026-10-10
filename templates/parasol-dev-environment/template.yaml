@@ -106,3 +106,9 @@ spec:
       - title: Open in catalog
         icon: catalog
         entityRef: ${{ steps.register.output.entityRef }}
+    text:
+      - title: When will the application be ready?
+        content: |
+          The development Deployment is created before its container image exists in Quay. Its pod may show `ErrImagePull` or `ImagePullBackOff` at first.
+
+          Push a commit to the new source branch and wait for the OpenShift pipeline to pass through **build-and-push** and **rollout-restart**. A run that fails an earlier quality gate will not publish the image. Once the pipeline succeeds, refresh the workload status; the pod should become Ready. If the pull error remains after a successful run, inspect the pod events and the pipeline logs.
