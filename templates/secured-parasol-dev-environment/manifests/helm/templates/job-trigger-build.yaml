@@ -65,7 +65,7 @@ spec:
 
               date -u > .build-trigger
               git add .build-trigger
-              COMMIT_MSG="Trigger first build
+              COMMIT_MSG="new branch: ${BRANCH}
 
               Automated-By: tekton-pipeline-setup
               Skip-Signature-Verification: true"
