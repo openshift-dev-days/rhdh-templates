@@ -1,0 +1,120 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: acs-image-scan
+  namespace: ${{ values.namespace }}
+  annotations:
+    task.results.format: application/json
+    task.results.type: roxctl-image-scan
+    task.results.key: SCAN_OUTPUT
+    task.output.location: logs
+    task.results.container: step-report
+spec:
+  params:
+    - name: IMAGE
+      type: string
+    - name: ROX_CENTRAL_ENDPOINT
+      type: string
+      default: "central.rhacs.svc:443"
+    - name: INSECURE_SKIP_TLS_VERIFY
+      type: string
+      default: "true"
+  results:
+    - name: SCAN_OUTPUT
+      description: Vulnerability summary in the format expected by the Developer Hub Tekton plugin
+  workspaces:
+    - name: source
+      optional: true
+  volumes:
+    - name: scan-output
+      emptyDir: {}
+  steps:
+    - name: scan
+      image: registry.access.redhat.com/ubi9-minimal:latest
+      env:
+        - name: ROX_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: rhacs-api-token
+              key: token
+        - name: ROX_CENTRAL_ENDPOINT
+          value: $(params.ROX_CENTRAL_ENDPOINT)
+      volumeMounts:
+        - name: scan-output
+          mountPath: /tmp/scan-output
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        curl -sk -L -H "Authorization: Bearer ${ROX_API_TOKEN}" \
+          "https://${ROX_CENTRAL_ENDPOINT}/api/cli/download/roxctl-linux" \
+          --output /tmp/roxctl
+        chmod +x /tmp/roxctl
+
+        /tmp/roxctl image scan --force \
+          --insecure-skip-tls-verify=$(params.INSECURE_SKIP_TLS_VERIFY) \
+          -e "${ROX_CENTRAL_ENDPOINT}" \
+          --output json \
+          --image "$(params.IMAGE)" \
+          > /tmp/scan-output/image-scan.json
+
+        echo "ACS image scan completed for $(params.IMAGE)" >&2
+
+        if [ -d "$(workspaces.source.path)" ]; then
+          mkdir -p "$(workspaces.source.path)/acs-results"
+          cp /tmp/scan-output/image-scan.json "$(workspaces.source.path)/acs-results/image-scan.json"
+        fi
+    - name: summary
+      image: registry.access.redhat.com/ubi9:latest
+      computeResources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+      volumeMounts:
+        - name: scan-output
+          mountPath: /tmp/scan-output
+      script: |
+        #!/usr/bin/env bash
+        python3 -c "
+        import json
+        data = json.load(open('/tmp/scan-output/image-scan.json'))
+        summary = data.get('result', {}).get('summary', {})
+        vulns = data.get('result', {}).get('vulnerabilities', [])
+        unpatched = {'critical':0,'high':0,'medium':0,'low':0}
+        for v in vulns:
+            if not v.get('componentFixedVersion',''):
+                sev = v.get('cveSeverity','')
+                if sev == 'CRITICAL': unpatched['critical'] += 1
+                elif sev == 'IMPORTANT': unpatched['high'] += 1
+                elif sev == 'MODERATE': unpatched['medium'] += 1
+                elif sev == 'LOW': unpatched['low'] += 1
+        result = {
+            'vulnerabilities': {
+                'critical': summary.get('CRITICAL', 0),
+                'high': summary.get('IMPORTANT', 0),
+                'medium': summary.get('MODERATE', 0),
+                'low': summary.get('LOW', 0),
+                'unknown': 0
+            },
+            'unpatched_vulnerabilities': unpatched
+        }
+        print(json.dumps(result))
+        " > $(results.SCAN_OUTPUT.path)
+    - name: report
+      image: registry.access.redhat.com/ubi9-minimal:latest
+      computeResources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
+      volumeMounts:
+        - name: scan-output
+          mountPath: /tmp/scan-output
+      script: |
+        #!/usr/bin/env bash
+        cat /tmp/scan-output/image-scan.json

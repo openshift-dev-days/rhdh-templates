@@ -1,0 +1,151 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: parasol-insurance-secured-push
+  namespace: ${{ values.namespace }}
+spec:
+  params:
+    - name: git-revision
+      type: string
+    - name: project-id
+      type: string
+    - name: commit-sha
+      type: string
+  results:
+    - name: ACS_IMAGE_SCAN_OUTPUT
+      value: $(tasks.acs-image-scan.results.SCAN_OUTPUT)
+  workspaces:
+    - name: source
+    - name: basic-auth
+    - name: dockerconfig
+    - name: sonar-credentials
+    - name: maven-cache
+  tasks:
+    - name: clone-source
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: URL
+          value: "${{ values.source_repo }}"
+        - name: REVISION
+          value: $(params.git-revision)
+        - name: SSL_VERIFY
+          value: "false"
+      workspaces:
+        - name: output
+          workspace: source
+        - name: basic-auth
+          workspace: basic-auth
+    - name: verify-commit-signature
+      runAfter:
+        - clone-source
+      taskRef:
+        name: verify-commit-signature
+      workspaces:
+        - name: source
+          workspace: source
+    - name: maven-build
+      runAfter:
+        - verify-commit-signature
+      taskRef:
+        name: maven-build
+      workspaces:
+        - name: source
+          workspace: source
+        - name: maven-cache
+          workspace: maven-cache
+    - name: sonar-scan
+      runAfter:
+        - maven-build
+      taskRef:
+        name: sonar-scan
+      params:
+        - name: SONAR_HOST_URL
+          value: "http://sonarqube.sonarqube.svc:9000"
+        - name: SONAR_DASHBOARD_URL
+          value: "https://sonarqube-sonarqube.${{ values.cluster_subdomain }}"
+        - name: SONAR_PROJECT_KEY
+          value: parasol-insurance-secured-${{ values.namespace }}
+      workspaces:
+        - name: source
+          workspace: source
+        - name: sonar-credentials
+          workspace: sonar-credentials
+        - name: maven-cache
+          workspace: maven-cache
+    - name: build-and-push
+      runAfter:
+        - sonar-scan
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: IMAGE
+          value: "${{ values.image_host }}/${{ values.image_organization }}/${{ values.image_name }}:${{ values.image_tag }}"
+        - name: DOCKERFILE
+          value: Containerfile
+        - name: TLSVERIFY
+          value: "false"
+        - name: STORAGE_DRIVER
+          value: vfs
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig
+    - name: acs-image-scan
+      runAfter:
+        - build-and-push
+      taskRef:
+        name: acs-image-scan
+      params:
+        - name: IMAGE
+          value: "${{ values.image_host }}/${{ values.image_organization }}/${{ values.image_name }}:${{ values.image_tag }}"
+      workspaces:
+        - name: source
+          workspace: source
+    - name: acs-image-check
+      runAfter:
+        - build-and-push
+      taskRef:
+        name: acs-image-check
+      params:
+        - name: IMAGE
+          value: "${{ values.image_host }}/${{ values.image_organization }}/${{ values.image_name }}:${{ values.image_tag }}"
+      workspaces:
+        - name: source
+          workspace: source
+    - name: rollout-restart
+      runAfter:
+        - acs-image-scan
+        - acs-image-check
+      taskRef:
+        name: rollout-restart
+      params:
+        - name: DEPLOYMENT
+          value: parasol-insurance
+  finally:
+    - name: report-to-commit
+      taskRef:
+        name: report-to-commit
+      workspaces:
+        - name: source
+          workspace: source
+      params:
+        - name: project_id
+          value: $(params.project-id)
+        - name: commit_sha
+          value: $(params.commit-sha)
