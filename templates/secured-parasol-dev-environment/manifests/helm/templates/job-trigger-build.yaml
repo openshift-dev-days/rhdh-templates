@@ -4,7 +4,7 @@ metadata:
   name: trigger-first-build
   namespace: ${{ values.namespace }}
 spec:
-  backoffLimit: 10
+  backoffLimit: 0
   template:
     spec:
       serviceAccountName: parasol-insurance-build
@@ -19,6 +19,8 @@ spec:
               value: "${{ values.branch }}"
             - name: OWNER
               value: "${{ values.owner }}"
+            - name: NAMESPACE
+              value: "${{ values.namespace }}"
             - name: GIT_CREDENTIALS
               valueFrom:
                 secretKeyRef:
@@ -37,19 +39,33 @@ spec:
               print(m.group(1) if m else '')
               ")
 
-              # Wait for webhook to exist on the repo
-              echo "Waiting for webhook to be configured..."
-              for i in $(seq 1 60); do
-                COUNT=$(curl -sk -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
-                  "https://${GITLAB_HOST}/api/v4/projects/${OWNER}%2Fparasol-insurance-secured/hooks" 2>/dev/null | \
-                  python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
-                if [ "${COUNT}" -gt "0" ] 2>/dev/null; then
-                  echo "Webhook found."
-                  break
+              # Do not push until the webhook for this sandbox's EventListener exists.
+              echo "Waiting for the GitLab push webhook to be configured..."
+              WEBHOOK_READY=false
+              DEADLINE=$((SECONDS + 600))
+              while (( SECONDS < DEADLINE )); do
+                ROUTE_HOST=$(oc get route parasol-insurance-secured-listener -n "${NAMESPACE}" \
+                  -o jsonpath='{.spec.host}' 2>/dev/null || true)
+                if [ -n "${ROUTE_HOST}" ]; then
+                  EXPECTED_URL="https://${ROUTE_HOST}"
+                  if curl -fsSk --connect-timeout 5 --max-time 10 \
+                    -H "PRIVATE-TOKEN: ${GITLAB_TOKEN}" \
+                    "https://${GITLAB_HOST}/api/v4/projects/${OWNER}%2Fparasol-insurance-secured/hooks" 2>/dev/null | \
+                    python3 -c 'import json,sys; url=sys.argv[1]; hooks=json.load(sys.stdin); sys.exit(0 if any(h.get("url") == url and h.get("push_events") is True for h in hooks) else 1)' \
+                    "${EXPECTED_URL}" 2>/dev/null; then
+                    WEBHOOK_READY=true
+                    echo "GitLab push webhook found for ${EXPECTED_URL}."
+                    break
+                  fi
                 fi
-                echo "  No webhook yet, waiting 10s... (attempt ${i}/60)"
+                echo "  Expected webhook not ready; checking again in 10s..."
                 sleep 10
               done
+
+              if [ "${WEBHOOK_READY}" != true ]; then
+                echo "ERROR: GitLab push webhook for ${OWNER}/parasol-insurance-secured was not ready after 10 minutes; first-build commit was not pushed." >&2
+                exit 1
+              fi
 
               # Small delay to ensure EventListener is fully ready
               sleep 15
